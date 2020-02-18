@@ -1,6 +1,6 @@
 # define simulation scenarios
 
-# simulation facors
+# simulation factors
 scenario_id <- (1:400)
 
 iter <- (1:1000)
