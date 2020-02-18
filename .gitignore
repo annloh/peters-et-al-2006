@@ -37,3 +37,47 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
+rsconnect/
+
+### LaTex related ignores
+
+# Temporary files from LaTex
+*.aux
+*.lof
+*.log
+*.lot
+*.out
+*.pdf
+*.gz
+*.run.xml
+*.syntex.gz
+
+## Bibliography auxiliary files (bibtex/biblatex/biber):
+*.bbl
+*.bcf
+*.blg
+
+# glossaries
+*.acn
+*.acr
+*.glg
+*.glo
+*.gls
+*.glsdefs
+*.ist
+*.lzo
+*.lzs
+
+# You may or may not also want to exclude teh following non-text outputs
+# *.ps
+# *.eps
+# *.pdf
+
+## Datafiles related ignores
+
+# In case you do not with to share the data
+*.sav
+*.csv
+*.dat
