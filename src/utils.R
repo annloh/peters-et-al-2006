@@ -20,9 +20,6 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage,
   #repeat sampling in case of heterogeneity
   if(heterogeneity > 0){
     tau <- heterogeneity * mean(ma_data$var_within)
-    required_trials <- obtain_true_ma_size(ma_size = ma_size,
-                                           bias_type = bias_type,
-                                           bias_percentage = bias_percentage)
 
     ma_data <- simulate_ma_data(required_trials = required_trials,
                                 p_contr = p_contr,
