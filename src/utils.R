@@ -43,7 +43,7 @@ return(ma_biased)
 
 # function outputs selection probability based on p_value and bias strength
 select_prob <- function(p_value, bias_strength){
-  if (strength == "moderate") {
+  if (bias_strength == "moderate") {
     p_table <- c(0.05, 0.2, 0.5, 1)
     sec_table <- c(1, 0.75, 0.5, 0.25)
   } else{
