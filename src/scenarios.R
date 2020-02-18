@@ -5,7 +5,7 @@ scenario_id <- (1:400)
 
 iter <- (1:1000)
 bias_type <- c("p", "es")
-bias_percentage <- c(0, 14, 40)
+bias_percentage <- c(0, .14, .40)
 bias_strength <- c("moderate", "severe")
 odds_ratio <- c(1, 1.2, 1.5, 3, 5) #5
 heterogeneity <- c(0, 0.2, 1.5, 5) #4
