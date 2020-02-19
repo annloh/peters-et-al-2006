@@ -1,7 +1,31 @@
-# function to simulate a single meta analysis
+# Helper functions for data generation
 
-generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage,
-                        bias_strength, odds_ratio, heterogeneity, ma_size, prob_cg_distr) {
+#' Generate meta-analysis data
+#'
+#' Call all helper functions to generate a dataframe with the simulated data pertaining to a single meta-analysis
+#'
+#' @param job_id
+#' @param scenario_id
+#' @param bias_type Bias type can either be "p" or "es".
+#' @param bias_percentage Percentage of studies that will be removed to to publication
+#'   bias. Only needs to be provided when bias type = "es".
+#' @param bias_strength  String indicating bias severity "moderate" or "strong".
+#'   only needs to be supplied when bias type = "p".
+#' @param odds_ratio True underlying effect of the symulated meta-analysis.
+#' @param heterogeneity Numeric value indicating the heterogeneity fraction.
+#' @param ma_size Intended number of studies to be included in final meta-analysis
+#'   (after publication bias).
+#' @param prob_cg_distr Probablility of an event in the control group.
+#'   Can be any value that can be evaluated to a numeric value between 0 and 1.
+#'
+#' @return A dataframe with ma-size rows. A subset of rows returned by
+#'   simulate_ma_data()
+#'
+
+
+generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
+                        bias_strength = NULL, odds_ratio, heterogeneity, ma_size,
+                        prob_cg_distr) {
   set.seed(job_id)
   p_contr <- eval(prob_cg_distr) #is this fixed over all studies in one meta-analysis?
 
@@ -38,7 +62,14 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage,
 return(ma_biased)
 }
 
-# function outputs selection probability based on p_value and bias strength
+#' Compute selection probablility.
+#'
+#' Function computes selection probability based on p_value and intended bia strength.
+#'
+#' @param p_value p_value (one tailed)
+#' @param bias_strength Strind indicating the bias strength can be "moderate" or "severe"
+#'
+#' @return Returns probabilty of publication
 select_prob <- function(p_value, bias_strength){
   if (bias_strength == "moderate") {
     p_table <- c(0.05, 0.2, 0.5, 1)
@@ -47,9 +78,18 @@ select_prob <- function(p_value, bias_strength){
     p_table <- c(0.05, 0.2, 1)
     sec_table <- c(1, 0.75, 0.25)
   }
-# output selection probability
+  # output selection probability
   sec_table[min(which(p_table > p_value))]
 }
+
+#' Obtain true number of studies that need to be simulated.
+#'
+#' @param ma_size Intended number of studies after publication bias.
+#' @param bias_type Bias type can either be "p" or "es".
+#' @param bias_percentage Percentage of studies that will be removed to to publication
+#'   bias. Only needs to be provided when bias type = "es".
+#'
+#' @return Returns a numerical value indicating the adapted sample size
 
 obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
   switch(bias_type,
@@ -57,6 +97,19 @@ obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
   p  = ma_size)
 }
 
+
+#' Simulate single study.
+#'
+#'Simulates a single study based on the input parameters.
+#'
+#' @param p_contr Probability of events in control group.
+#' @param bias_type Bias type can either be "p" or "es".
+#' @param bias_strength  String indicating bias severity "moderate" or "strong".
+#'   only needs to be supplied when bias type = "p".
+#' @param odds_ratio True underlying effect of the symulated meta-analysis.#' @param bias_type
+#' @param tau Product of hereogeneity parameter and mean within study-variance
+#'
+#' @return A list of descriptives for one simulated study.
 
 add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau = 0){
 
@@ -124,6 +177,24 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
        d = d,
        theta = theta)
   }
+
+
+
+#' Simulate full study set.
+#'
+#' Repeatedly calls add_study() until the intended meta-analysis size equals the
+#' number of studies with a positive selection indicator (== 1)
+#'
+#' @param required_trials Required number of studies as
+#' @param p_contr passed on to add_study
+#' @param odds_ratio passed on to add_study
+#' @param bias_type paassed on to add_study
+#' @param bias_strength passed on to add_study
+#' @param tau passed on to add_study
+#'
+#' @return Returns a data frame of all studies pertaining to a given
+#' meta-analysis before publication bias
+
 
 simulate_ma_data <- function(required_trials, p_contr, odds_ratio, bias_type,
                              bias_strength = NULL, tau = 0){
