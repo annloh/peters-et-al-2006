@@ -55,13 +55,9 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
                                            tau = tau)
   }
 
-  # apply publication bias
-  ma_biased <- switch(bias_type,
-                    es = ma_data %>% top_n(ma_size, or_sim),
-                    p = ma_data %>% filter(selection == 1)
-                    )
+  apply_publication_bias(ma_data = ma_data,
+                         bias_type = bias_type)
 
-return(ma_biased)
 }
 
 
@@ -104,16 +100,12 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   event_sim_contr <- sim_contr %>% sum
   event_sim_exp <- sim_exp %>% sum
 
-  p_value <- compute_p_value(n =n,
+  p_value <- compute_p_value(n = n,
                              event_sim_exp = event_sim_exp,
                              event_sim_contr = event_sim_contr)
 
   # logical vector of selected studies
-  if(bias_type == "p"){
-    selection <- p_value %>%  {rbinom(n = 1, size = 1,
-                                    prob = select_prob(p_value = .,
-                                                       bias_strength = bias_strength))}
-  } else{selection <- 1}
+  selection <- set_selection_indicator(bias_type, p_value, bias_strength)
 
   # Computing a,b,c,d from 2x2 table
   # a = number of events in exposed group
@@ -148,6 +140,8 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
        or_sim = or_sim,
        theta = theta)
 }
+
+
 
 # Simulate full unbiased study set. --------------------------------------------
 
@@ -249,7 +243,7 @@ compute_p_value <- function(n, event_sim_exp, event_sim_contr){
 #' Function computes selection probability based on p_value and intended bia strength.
 #'
 #' @param p_value p_value (one tailed)
-#' @param bias_strength Strind indicating the bias strength can be "moderate" or "severe"
+#' @param bias_strength String indicating the bias strength can be "moderate" or "severe"
 #'
 #' @return Returns probabilty of publication
 
@@ -263,4 +257,49 @@ select_prob <- function(p_value, bias_strength){
   }
   # output selection probability
   sec_table[min(which(p_table > p_value))]
+}
+
+
+
+
+#' Set selection idicator.
+#'
+#' If bias type is "p" one sample will be drawn from a binomial distribution with
+#' the probability parameter dertermined by \code{select_prob()} based on bias strength
+#' and size of p value.
+#'
+#' @param bias_type Bias type can either be "p" or "es".
+#' @param p_value p_value (one tailed)
+#' @param bias_strength String indicating the bias strength can be "moderate" or "severe"
+#'  passed to \code{select_prob()}
+#'
+#' @return 1 if bias type is "es" (selection will then be performed later).
+#'         1 if bias type is "p" and the draw from the binomial distribution returned 1.
+#'         0 if bias type is "p" and the draw from the binomial distribution returned 1.
+
+set_selection_indicator <- function(bias_type, p_value, bias_strength){
+  if(bias_type == "p"){
+    p_value %>%  {rbinom(n = 1, size = 1,
+                                      prob = select_prob(p_value = .,
+                                      bias_strength = bias_strength))}
+  } else{1}
+}
+
+
+
+#' Apply publication bias.
+#'
+#' Function turns unbiased set of studies into biased one (if applicable).
+#'
+#' @param ma_data Dataset with simulated studies before publication bias.
+#' @param bias_type Bias type can either be "p" or "es".
+#'
+#' @return Returns biased set of simulated study.
+
+apply_publication_bias <- function(ma_data, bias_type){
+
+  switch(bias_type,
+         es = ma_data %>% top_n(ma_size, or_sim),
+         p = ma_data %>% filter(selection == 1)
+  )
 }
