@@ -28,8 +28,10 @@
 generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
                         bias_strength = NULL, odds_ratio, heterogeneity, ma_size,
                         prob_cg_distr) {
+
   set.seed(job_id)
-  p_contr <- eval(prob_cg_distr) #is this fixed over all studies in one meta-analysis?
+
+  p_contr <- eval(prob_cg_distr)
 
   # simulate data for studies in meta-analysis
   ma_data <- simulate_unbiased_study_set(p_contr = p_contr,
@@ -69,6 +71,7 @@ return(ma_biased)
 #' @param bias_strength Strind indicating the bias strength can be "moderate" or "severe"
 #'
 #' @return Returns probabilty of publication
+
 select_prob <- function(p_value, bias_strength){
   if (bias_strength == "moderate") {
     p_table <- c(0.05, 0.2, 0.5, 1)
