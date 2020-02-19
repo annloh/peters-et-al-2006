@@ -3,9 +3,10 @@
 
 # Generate meta-analysis data --------------------------------------------------
 
-#' Generate meta-analysis data
+#' Generate meta-analysis data.
 #'
-#' Call all helper functions to generate a dataframe with the simulated data pertaining to a single meta-analysis
+#' Call all helper functions to generate a dataframe with the simulated data
+#' pertaining to a single meta-analysis.
 #'
 #' @param job_id
 #' @param scenario_id
@@ -148,7 +149,7 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
        theta = theta)
 }
 
-
+# Simulate full unbiased study set. --------------------------------------------
 
 #' Simulate full unbiased study set.
 #'
@@ -217,6 +218,8 @@ simulate_unbiased_study_set <- function(ma_size, p_contr, odds_ratio, bias_type,
  }
 
 
+
+ # Compute p_value. ------------------------------------------------------------
 
 #' Compute p_value.
 #'
