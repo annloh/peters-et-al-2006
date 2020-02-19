@@ -100,6 +100,8 @@ obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
   p  = ma_size)
 }
 
+
+
 # Simulate single study --------------------------------------------------------
 
 #' Simulate single study.
@@ -140,7 +142,6 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 
   compute_p_value(event_sim_exp = event_sim_exp,
                   event_sim_contr = event_sim_contr)
-
 
   # logical vector of selected studies
   if(bias_type == "p"){
@@ -226,7 +227,7 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   }
 
   # transform list to df
-  ma_data <- do.call(rbind.data.frame, ma_data)
+  do.call(rbind.data.frame, ma_data)
 }
 
 
