@@ -194,7 +194,7 @@ simulate_unbiased_study_set <- function(ma_size, p_contr, odds_ratio, bias_type,
 
 
 
- # Obtain true number of studies that need to be simulated ----------------------
+ # Obtain true number of studies that need to be simulated ---------------------
 
  #' Obtain true number of studies that need to be simulated.
  #'
@@ -261,6 +261,7 @@ select_prob <- function(p_value, bias_strength){
 
 
 
+# Set selection idicator. ------------------------------------------------------
 
 #' Set selection idicator.
 #'
@@ -286,6 +287,8 @@ set_selection_indicator <- function(bias_type, p_value, bias_strength){
 }
 
 
+
+# Apply publication bias. ------------------------------------------------------
 
 #' Apply publication bias.
 #'
