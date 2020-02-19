@@ -61,50 +61,6 @@ return(ma_biased)
 
 
 
-# Compute selection probablility -----------------------------------------------
-
-#' Compute selection probablility.
-#'
-#' Function computes selection probability based on p_value and intended bia strength.
-#'
-#' @param p_value p_value (one tailed)
-#' @param bias_strength Strind indicating the bias strength can be "moderate" or "severe"
-#'
-#' @return Returns probabilty of publication
-
-select_prob <- function(p_value, bias_strength){
-  if (bias_strength == "moderate") {
-    p_table <- c(0.05, 0.2, 0.5, 1)
-    sec_table <- c(1, 0.75, 0.5, 0.25)
-  } else{
-    p_table <- c(0.05, 0.2, 1)
-    sec_table <- c(1, 0.75, 0.25)
-  }
-  # output selection probability
-  sec_table[min(which(p_table > p_value))]
-}
-
-
-
-# Obtain true number of studies that need to be simulated ----------------------
-
-#' Obtain true number of studies that need to be simulated.
-#'
-#' @param ma_size Intended number of studies after publication bias.
-#' @param bias_type Bias type can either be "p" or "es".
-#' @param bias_percentage Percentage of studies that will be removed to to
-#'   publication bias. Only needs to be provided when bias type = "es".
-#'
-#' @return Returns a numerical value indicating the adapted sample size
-
-obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
-  switch(bias_type,
-  es = ma_size/(1 - bias_percentage),
-  p  = ma_size)
-}
-
-
-
 # Simulate single study --------------------------------------------------------
 
 #' Simulate single study.
@@ -185,7 +141,7 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
        se_lnor = se_lnor,
        or_sim = or_sim,
        theta = theta)
-  }
+}
 
 
 
@@ -203,7 +159,7 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 #' @return Returns a data frame of all studies pertaining to a given
 #'   meta-analysis before publication bias
 
- simulate_unbiased_study_set <- function(p_contr, odds_ratio, bias_type,
+simulate_unbiased_study_set <- function(p_contr, odds_ratio, bias_type,
                                          bias_strength = NULL, tau = 0){
 
   # obtain required true number of studies in MA before publication bias
@@ -226,12 +182,30 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
                                     bias_strength = bias_strength)
 
     required_trials <- required_trials -  ma_data[[counter]]$selection
-
   }
 
   # transform list to df
   do.call(rbind.data.frame, ma_data)
 }
+
+
+
+ # Obtain true number of studies that need to be simulated ----------------------
+
+ #' Obtain true number of studies that need to be simulated.
+ #'
+ #' @param ma_size Intended number of studies after publication bias.
+ #' @param bias_type Bias type can either be "p" or "es".
+ #' @param bias_percentage Percentage of studies that will be removed to to
+ #'   publication bias. Only needs to be provided when bias type = "es".
+ #'
+ #' @return Returns a numerical value indicating the adapted sample size
+
+ obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
+   switch(bias_type,
+          es = ma_size/(1 - bias_percentage),
+          p  = ma_size)
+ }
 
 
 
@@ -251,4 +225,29 @@ compute_p_value <- function(event_sim_exp, event_sim_contr){
                     nrow = 2, byrow = T) %>%
       chisq.test(correct = TRUE) %>%
         .$p.value/2
+}
+
+
+
+# Compute selection probablility -----------------------------------------------
+
+#' Compute selection probablility.
+#'
+#' Function computes selection probability based on p_value and intended bia strength.
+#'
+#' @param p_value p_value (one tailed)
+#' @param bias_strength Strind indicating the bias strength can be "moderate" or "severe"
+#'
+#' @return Returns probabilty of publication
+
+select_prob <- function(p_value, bias_strength){
+  if (bias_strength == "moderate") {
+    p_table <- c(0.05, 0.2, 0.5, 1)
+    sec_table <- c(1, 0.75, 0.5, 0.25)
+  } else{
+    p_table <- c(0.05, 0.2, 1)
+    sec_table <- c(1, 0.75, 0.25)
+  }
+  # output selection probability
+  sec_table[min(which(p_table > p_value))]
 }
