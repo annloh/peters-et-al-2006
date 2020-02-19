@@ -30,8 +30,7 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
   p_contr <- eval(prob_cg_distr) #is this fixed over all studies in one meta-analysis?
 
   # simulate data for studies in meta-analysis
-  ma_data <- simulate_ma_data(required_trials = required_trials,
-                              p_contr = p_contr,
+  ma_data <- simulate_ma_data(p_contr = p_contr,
                               odds_ratio = odds_ratio,
                               bias_type = bias_type,
                               bias_strength = bias_strength)
@@ -40,8 +39,7 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
   if(heterogeneity > 0){
     tau <- heterogeneity * mean(ma_data$var_within)
 
-    ma_data <- simulate_ma_data(required_trials = required_trials,
-                                p_contr = p_contr,
+    ma_data <- simulate_ma_data(p_contr = p_contr,
                                 odds_ratio = odds_ratio,
                                 bias_type = bias_type,
                                 bias_strength = bias_strength,
@@ -190,7 +188,7 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 #' meta-analysis before publication bias
 
 
- simulate_ma_data <- function( p_contr, odds_ratio, bias_type,
+ simulate_ma_data <- function(p_contr, odds_ratio, bias_type,
                              bias_strength = NULL, tau = 0){
 
   # obtain required true number of studies in MA before publication bias
