@@ -1,5 +1,8 @@
 # Helper functions for data generation
 
+
+# Generate meta-analysis data --------------------------------------------------
+
 #' Generate meta-analysis data
 #'
 #' Call all helper functions to generate a dataframe with the simulated data pertaining to a single meta-analysis
@@ -21,7 +24,6 @@
 #' @return A dataframe with ma-size rows. A subset of rows returned by
 #'   simulate_unbiased_study_set()
 #'
-
 
 generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
                         bias_strength = NULL, odds_ratio, heterogeneity, ma_size,
@@ -55,6 +57,8 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
 return(ma_biased)
 }
 
+# Compute selection probablility -----------------------------------------------
+
 #' Compute selection probablility.
 #'
 #' Function computes selection probability based on p_value and intended bia strength.
@@ -75,6 +79,8 @@ select_prob <- function(p_value, bias_strength){
   sec_table[min(which(p_table > p_value))]
 }
 
+# Obtain true number of studies that need to be simulated ----------------------
+
 #' Obtain true number of studies that need to be simulated.
 #'
 #' @param ma_size Intended number of studies after publication bias.
@@ -90,6 +96,7 @@ obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
   p  = ma_size)
 }
 
+# Simulate single study --------------------------------------------------------
 
 #' Simulate single study.
 #'
@@ -127,15 +134,9 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   event_sim_contr <- sim_contr %>% sum
   event_sim_exp <- sim_exp %>% sum
 
-  #computing p-value from chi-square test
+  compute_p_value(event_sim_exp = event_sim_exp,
+                  event_sim_contr = event_sim_contr)
 
-  p_value <- matrix(c(event_sim_exp, (n - event_sim_exp),
-                      event_sim_contr, (n - event_sim_contr)),
-                    nrow = 2, byrow = T) %>%
-                      chisq.test(correct = TRUE) %>%
-                        .$p.value/2
-
-  # careful Peters used one sided p-values!!!
 
   # logical vector of selected studies
   if(bias_type == "p"){
@@ -223,3 +224,21 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 }
 
 
+
+#' Compute p_value.
+#'
+#'Obtains one-sided p-value from chi-square test.
+#'
+#' @param event_sim_exp  Simuated numbr of events in exposed group.
+#' @param event_sim_contr Simulated number of events in control-group.
+#'
+#' @return Returns one sided p-value from chi-square test.
+
+compute_p_value <- function(event_sim_exp, event_sim_contr){
+
+    matrix(c(event_sim_exp, (n - event_sim_exp),
+                      event_sim_contr, (n - event_sim_contr)),
+                    nrow = 2, byrow = T) %>%
+      chisq.test(correct = TRUE) %>%
+        .$p.value/2
+}
