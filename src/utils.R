@@ -154,11 +154,12 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 #'
 #' Repeatedly calls \code{add_study()} until the intended meta-analysis size equals the
 #' number of studies with a positive selection indicator (== 1)
-#'
+#' @param ma_size passed on to \code{obtain_true_ma_size()}
 #' @param p_contr passed on to \code{add_study()}
 #' @param odds_ratio passed on to \code{add_study()}
-#' @param bias_type paassed on to \code{add_study()}
+#' @param bias_type paassed on to \code{add_study()} and \code{obtain_true_ma_size()}
 #' @param bias_strength passed on to \code{add_study()}
+#' @param bias_percentage passed on to \code{obtain_true_ma_size()}
 #' @param tau passed on to \code{add_study()}
 #'
 #' @return Returns a data frame of all studies pertaining to a given
@@ -173,8 +174,10 @@ simulate_unbiased_study_set <- function(ma_size, p_contr, odds_ratio, bias_type,
                                          bias_type = bias_type,
                                          bias_percentage = bias_percentage)
 
-  # initiate list for study details
+  # set counter for indexing within the loop
   counter <- 0
+
+  # initiate list for study details to be filled in loop
   ma_data <- list()
 
   while(required_trials > 0){
