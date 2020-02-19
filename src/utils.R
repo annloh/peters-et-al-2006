@@ -19,7 +19,7 @@
 #'   Can be any value that can be evaluated to a numeric value between 0 and 1.
 #'
 #' @return A dataframe with ma-size rows. A subset of rows returned by
-#'   simulate_ma_data()
+#'   simulate_unbiased_study_set()
 #'
 
 
@@ -30,20 +30,20 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
   p_contr <- eval(prob_cg_distr) #is this fixed over all studies in one meta-analysis?
 
   # simulate data for studies in meta-analysis
-  ma_data <- simulate_ma_data(p_contr = p_contr,
-                              odds_ratio = odds_ratio,
-                              bias_type = bias_type,
-                              bias_strength = bias_strength)
+  ma_data <- simulate_unbiased_study_set(p_contr = p_contr,
+                                         odds_ratio = odds_ratio,
+                                         bias_type = bias_type,
+                                         bias_strength = bias_strength)
 
   #repeat sampling in case of heterogeneity
   if(heterogeneity > 0){
     tau <- heterogeneity * mean(ma_data$var_within)
 
-    ma_data <- simulate_ma_data(p_contr = p_contr,
-                                odds_ratio = odds_ratio,
-                                bias_type = bias_type,
-                                bias_strength = bias_strength,
-                                tau = tau)
+    ma_data <- simulate_unbiased_study_set(p_contr = p_contr,
+                                           odds_ratio = odds_ratio,
+                                           bias_type = bias_type,
+                                           bias_strength = bias_strength,
+                                           tau = tau)
   }
 
   # apply publication bias
@@ -127,7 +127,6 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   event_sim_contr <- sim_contr %>% sum
   event_sim_exp <- sim_exp %>% sum
 
-
   #computing p-value from chi-square test
 
   p_value <- matrix(c(event_sim_exp, (n - event_sim_exp),
@@ -157,6 +156,11 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   c <- pmax(n - event_sim_exp, 0.5)
   d <- pmax(n - event_sim_contr, 0.5)
 
+  # compute additonal study desscriptives that do not depend on sampling
+  var_within = 1/a + 1/b + 1/c + 1/d
+  se_lnor = sqrt(1/a + 1/b + 1/c + 1/d)
+  or_sim = (a*d)/(b*c)
+
   list(n = n,
        p_sim_contr = p_sim_contr,
        p_sim_exp = p_sim_exp,
@@ -168,10 +172,11 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
        b = b,
        c = c,
        d = d,
+       var_within =var_within,
+       se_lnor = se_lnor,
+       or_sim = or_sim,
        theta = theta)
   }
-
-
 
 #' Simulate full study set.
 #'
@@ -187,9 +192,8 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 #' @return Returns a data frame of all studies pertaining to a given
 #' meta-analysis before publication bias
 
-
- simulate_ma_data <- function(p_contr, odds_ratio, bias_type,
-                             bias_strength = NULL, tau = 0){
+ simulate_unbiased_study_set <- function(p_contr, odds_ratio, bias_type,
+                                         bias_strength = NULL, tau = 0){
 
   # obtain required true number of studies in MA before publication bias
   required_trials <- obtain_true_ma_size(ma_size = ma_size,
@@ -216,12 +220,6 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 
   # transform list to df
   ma_data <- do.call(rbind.data.frame, ma_data)
-
-
-  # compute additonal study desscriptives that do not depend on sampling
-  ma_data %>% mutate(var_within = 1/a + 1/b + 1/c + 1/d,
-                     se_lnor = sqrt(1/a + 1/b + 1/c + 1/d),
-                     or_sim = (a*d)/(b*c))
 }
 
 
