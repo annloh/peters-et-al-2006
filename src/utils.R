@@ -99,7 +99,8 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   event_sim_contr <- sim_contr %>% sum
   event_sim_exp <- sim_exp %>% sum
 
-  compute_p_value(event_sim_exp = event_sim_exp,
+  compute_p_value(n =n,
+                  event_sim_exp = event_sim_exp,
                   event_sim_contr = event_sim_contr)
 
   # logical vector of selected studies
@@ -211,14 +212,15 @@ simulate_unbiased_study_set <- function(p_contr, odds_ratio, bias_type,
 
 #' Compute p_value.
 #'
-#'Obtains one-sided p-value from chi-square test.
+#' Obtains one-sided p-value from chi-square test.
 #'
+#' @param n size of both exposed and control group.
 #' @param event_sim_exp  Simuated numbr of events in exposed group.
 #' @param event_sim_contr Simulated number of events in control-group.
 #'
 #' @return Returns one sided p-value from chi-square test.
 
-compute_p_value <- function(event_sim_exp, event_sim_contr){
+compute_p_value <- function(n, event_sim_exp, event_sim_contr){
 
     matrix(c(event_sim_exp, (n - event_sim_exp),
                       event_sim_contr, (n - event_sim_contr)),
