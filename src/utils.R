@@ -29,11 +29,6 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
   set.seed(job_id)
   p_contr <- eval(prob_cg_distr) #is this fixed over all studies in one meta-analysis?
 
-  # obtain required true number of studies in MA before publication bias
-  required_trials <- obtain_true_ma_size(ma_size = ma_size,
-                                         bias_type = bias_type,
-                                         bias_percentage = bias_percentage)
-
   # simulate data for studies in meta-analysis
   ma_data <- simulate_ma_data(required_trials = required_trials,
                               p_contr = p_contr,
@@ -182,22 +177,26 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 
 #' Simulate full study set.
 #'
-#' Repeatedly calls add_study() until the intended meta-analysis size equals the
+#' Repeatedly calls \code{add_study()} until the intended meta-analysis size equals the
 #' number of studies with a positive selection indicator (== 1)
 #'
-#' @param required_trials Required number of studies as
-#' @param p_contr passed on to add_study
-#' @param odds_ratio passed on to add_study
-#' @param bias_type paassed on to add_study
-#' @param bias_strength passed on to add_study
-#' @param tau passed on to add_study
+#' @param p_contr passed on to \code{add_study()}
+#' @param odds_ratio passed on to \code{add_study()}
+#' @param bias_type paassed on to \code{add_study()}
+#' @param bias_strength passed on to \code{add_study()}
+#' @param tau passed on to \code{add_study()}
 #'
 #' @return Returns a data frame of all studies pertaining to a given
 #' meta-analysis before publication bias
 
 
-simulate_ma_data <- function(required_trials, p_contr, odds_ratio, bias_type,
+ simulate_ma_data <- function( p_contr, odds_ratio, bias_type,
                              bias_strength = NULL, tau = 0){
+
+  # obtain required true number of studies in MA before publication bias
+  required_trials <- obtain_true_ma_size(ma_size = ma_size,
+                                         bias_type = bias_type,
+                                         bias_percentage = bias_percentage)
 
   #initiate list for study details
   counter <- 0
