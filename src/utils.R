@@ -99,9 +99,9 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   event_sim_contr <- sim_contr %>% sum
   event_sim_exp <- sim_exp %>% sum
 
-  compute_p_value(n =n,
-                  event_sim_exp = event_sim_exp,
-                  event_sim_contr = event_sim_contr)
+  p_value <- compute_p_value(n =n,
+                             event_sim_exp = event_sim_exp,
+                             event_sim_contr = event_sim_contr)
 
   # logical vector of selected studies
   if(bias_type == "p"){
