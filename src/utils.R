@@ -57,6 +57,8 @@ generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
 return(ma_biased)
 }
 
+
+
 # Compute selection probablility -----------------------------------------------
 
 #' Compute selection probablility.
@@ -79,14 +81,16 @@ select_prob <- function(p_value, bias_strength){
   sec_table[min(which(p_table > p_value))]
 }
 
+
+
 # Obtain true number of studies that need to be simulated ----------------------
 
 #' Obtain true number of studies that need to be simulated.
 #'
 #' @param ma_size Intended number of studies after publication bias.
 #' @param bias_type Bias type can either be "p" or "es".
-#' @param bias_percentage Percentage of studies that will be removed to to publication
-#'   bias. Only needs to be provided when bias type = "es".
+#' @param bias_percentage Percentage of studies that will be removed to to
+#'   publication bias. Only needs to be provided when bias type = "es".
 #'
 #' @return Returns a numerical value indicating the adapted sample size
 
@@ -106,7 +110,7 @@ obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
 #' @param bias_type Bias type can either be "p" or "es".
 #' @param bias_strength  String indicating bias severity "moderate" or "strong".
 #'   only needs to be supplied when bias type = "p".
-#' @param odds_ratio True underlying effect of the symulated meta-analysis.#' @param bias_type
+#' @param odds_ratio True underlying effect of the symulated meta-analysis.#'
 #' @param tau Product of hereogeneity parameter and mean within study-variance
 #'
 #' @return A list of descriptives for one simulated study.
@@ -179,7 +183,9 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
        theta = theta)
   }
 
-#' Simulate full study set.
+
+
+#' Simulate full unbiased study set.
 #'
 #' Repeatedly calls \code{add_study()} until the intended meta-analysis size equals the
 #' number of studies with a positive selection indicator (== 1)
@@ -191,7 +197,7 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 #' @param tau passed on to \code{add_study()}
 #'
 #' @return Returns a data frame of all studies pertaining to a given
-#' meta-analysis before publication bias
+#'   meta-analysis before publication bias
 
  simulate_unbiased_study_set <- function(p_contr, odds_ratio, bias_type,
                                          bias_strength = NULL, tau = 0){
@@ -201,7 +207,7 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
                                          bias_type = bias_type,
                                          bias_percentage = bias_percentage)
 
-  #initiate list for study details
+  # initiate list for study details
   counter <- 0
   ma_data <- list()
 
