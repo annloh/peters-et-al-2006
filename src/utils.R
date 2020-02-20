@@ -26,9 +26,16 @@
 #'   simulate_unbiased_study_set()
 #'
 
-generate_ma <- function(job_id, scenario_id, bias_type, bias_percentage = NULL,
-                        bias_strength = NULL, odds_ratio, heterogeneity, ma_size,
-                        prob_cg_distr) {
+
+generate_ma <-function(job_id,
+                       scenario_id,
+                       bias_type,
+                       bias_percentage = NULL,
+                       bias_strength = NULL,
+                       odds_ratio,
+                       heterogeneity,
+                       ma_size,
+                       prob_cg_distr) {
 
   set.seed(job_id)
 
@@ -207,7 +214,7 @@ simulate_unbiased_study_set <- function(ma_size, p_contr, odds_ratio, bias_type,
 
  obtain_true_ma_size <- function(ma_size, bias_type, bias_percentage = NULL){
    switch(bias_type,
-          es = ma_size/(1 - bias_percentage),
+          es = round(ma_size/(1 - bias_percentage)),
           p  = ma_size)
  }
 
