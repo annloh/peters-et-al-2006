@@ -63,6 +63,7 @@ generate_ma <-function(job_id,
   }
 
   apply_publication_bias(ma_data = ma_data,
+                         ma_size = ma_size,
                          bias_type = bias_type)
 
 }
