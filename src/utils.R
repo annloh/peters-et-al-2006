@@ -306,7 +306,9 @@ set_selection_indicator <- function(bias_type, p_value, bias_strength){
 #'
 #' @return Returns biased set of simulated study.
 
-apply_publication_bias <- function(ma_data, bias_type){
+apply_publication_bias <- function(ma_data,
+                                   ma_size,
+                                   bias_type){
 
   switch(bias_type,
          es = ma_data %>% top_n(ma_size, or_sim),
