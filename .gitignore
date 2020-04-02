@@ -4,7 +4,10 @@
 *.Rproj
 
 # Session Data files
-.RData
+.RData*
+
+# R data files
+*.rds
 
 # User-specific files
 .Ruserdata
@@ -82,3 +85,4 @@ rsconnect/
 *.sav
 *.csv
 *.dat
+.Rproj.user

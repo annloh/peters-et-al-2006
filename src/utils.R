@@ -8,8 +8,8 @@
 #' Call all helper functions to generate a dataframe with the simulated data
 #' pertaining to a single meta-analysis.
 #'
-#' @param job_id
-#' @param scenario_id
+#' @param job_id User defined job_id. Used for determining a unique seed.
+#' @param scenario_id Unique id fer scenario = constellation of simulation parameters.
 #' @param bias_type Bias type can either be "p" or "es".
 #' @param bias_percentage Percentage of studies that will be removed to to publication
 #'   bias. Only needs to be provided when bias type = "es".
@@ -27,7 +27,7 @@
 #'
 
 
-generate_ma <-function(job_id,
+generate_meta_analysis <-function(job_id,
                        scenario_id,
                        bias_type,
                        bias_percentage = NULL,
@@ -37,12 +37,14 @@ generate_ma <-function(job_id,
                        ma_size,
                        prob_cg_distr) {
 
-  set.seed(job_id)
+  set.seed(get_seed(job_id = job_id, scenario_id = scenario_id))
 
-  p_contr <- eval(prob_cg_distr)
+  p_contr <- prob_cg_distr()
 
   # simulate data for studies in meta-analysis
-  ma_data <- simulate_unbiased_study_set(ma_size = ma_size,
+  ma_data <- simulate_unbiased_study_set(job_id = job_id,
+                                         scenario_id = scenario_id,
+                                         ma_size = ma_size,
                                          p_contr = p_contr,
                                          odds_ratio = odds_ratio,
                                          bias_type = bias_type,
@@ -53,7 +55,9 @@ generate_ma <-function(job_id,
   if(heterogeneity > 0){
     tau <- heterogeneity * mean(ma_data$var_within)
 
-    ma_data <- simulate_unbiased_study_set(ma_size = ma_size,
+    ma_data <- simulate_unbiased_study_set(job_id = job_id,
+                                           scenario_id = scenario_id,
+                                           ma_size = ma_size,
                                            p_contr = p_contr,
                                            odds_ratio = odds_ratio,
                                            bias_type = bias_type,
@@ -62,10 +66,13 @@ generate_ma <-function(job_id,
                                            tau = tau)
   }
 
-  apply_publication_bias(ma_data = ma_data,
-                         ma_size = ma_size,
-                         bias_type = bias_type)
+  ma_data <- apply_publication_bias(ma_data = ma_data,
+                                    ma_size = ma_size,
+                                    bias_type = bias_type)
 
+  ma_data <- cbind(ma_data, i_squared_biased = compute_i_squared(or_sim = ma_data$or_sim,
+                                                                   var_within = ma_data$var_within,
+                                                                   k = ma_size))
 }
 
 
@@ -76,6 +83,8 @@ generate_ma <-function(job_id,
 #'
 #'Simulates a single study based on the input parameters.
 #'
+#' @param job_id user defined job_id.
+#' @param scenario_id id of current scenario..
 #' @param p_contr Probability of events in control group.
 #' @param bias_type Bias type can either be "p" or "es".
 #' @param bias_strength  String indicating bias severity "moderate" or "strong".
@@ -85,7 +94,13 @@ generate_ma <-function(job_id,
 #'
 #' @return A list of descriptives for one simulated study.
 
-add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau = 0){
+simulate_study <- function(job_id,
+                      scenario_id,
+                      p_contr,
+                      bias_type,
+                      bias_strength = NULL,
+                      odds_ratio,
+                      tau = 0){
 
   theta <- rnorm(1, mean = log(odds_ratio), sd = sqrt(tau))
 
@@ -132,7 +147,10 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
   se_lnor = sqrt(1/a + 1/b + 1/c + 1/d)
   or_sim = (a*d)/(b*c)
 
-  list(n = n,
+  list(job_id = job_id,
+       scenario_id = scenario_id,
+       odds_ratio = odds_ratio,
+       n = n,
        p_sim_contr = p_sim_contr,
        p_sim_exp = p_sim_exp,
        event_sim_contr = event_sim_contr,
@@ -155,21 +173,28 @@ add_study <- function(p_contr, bias_type, bias_strength = NULL, odds_ratio, tau 
 
 #' Simulate full unbiased study set.
 #'
-#' Repeatedly calls \code{add_study()} until the intended meta-analysis size equals the
+#' Repeatedly calls \code{simulate_study()} until the intended meta-analysis size equals the
 #' number of studies with a positive selection indicator (== 1)
+#'
 #' @param ma_size passed on to \code{obtain_true_ma_size()}
-#' @param p_contr passed on to \code{add_study()}
-#' @param odds_ratio passed on to \code{add_study()}
-#' @param bias_type paassed on to \code{add_study()} and \code{obtain_true_ma_size()}
-#' @param bias_strength passed on to \code{add_study()}
+#' @param p_contr passed on to \code{simulate_study()}
+#' @param odds_ratio passed on to \code{simulate_study()}
+#' @param bias_type paassed on to \code{simulate_study()} and \code{obtain_true_ma_size()}
+#' @param bias_strength passed on to \code{simulate_study()}
 #' @param bias_percentage passed on to \code{obtain_true_ma_size()}
-#' @param tau passed on to \code{add_study()}
+#' @param tau passed on to \code{simulate_study()}
 #'
 #' @return Returns a data frame of all studies pertaining to a given
 #'   meta-analysis before publication bias
 
-simulate_unbiased_study_set <- function(ma_size, p_contr, odds_ratio, bias_type,
-                                        bias_strength = NULL, bias_percentage = NULL,
+simulate_unbiased_study_set <- function(job_id,
+                                        scenario_id,
+                                        ma_size,
+                                        p_contr,
+                                        odds_ratio,
+                                        bias_type,
+                                        bias_strength = NULL,
+                                        bias_percentage = NULL,
                                         tau = 0){
 
   # obtain required true number of studies in MA before publication bias
@@ -187,7 +212,9 @@ simulate_unbiased_study_set <- function(ma_size, p_contr, odds_ratio, bias_type,
 
     counter <- counter + 1
 
-    ma_data[[counter]] <- add_study(p_contr = p_contr,
+    ma_data[[counter]] <- simulate_study(job_id = job_id,
+                                    scenario_id = scenario_id,
+                                    p_contr = p_contr,
                                     odds_ratio = odds_ratio,
                                     tau = tau,
                                     bias_type = bias_type,
@@ -197,7 +224,14 @@ simulate_unbiased_study_set <- function(ma_size, p_contr, odds_ratio, bias_type,
   }
 
   # transform list to df
-  do.call(rbind.data.frame, ma_data)
+  ma_data <- do.call(rbind.data.frame, ma_data)
+
+  # attach original number of studies
+  ma_data %<>% mutate(original_k = nrow(ma_data))
+
+  ma_data <- cbind(ma_data, i_squared_unbiased = compute_i_squared(or_sim = ma_data$or_sim,
+                    var_within = ma_data$var_within,
+                    k = nrow(ma_data)))
 }
 
 
@@ -315,4 +349,39 @@ apply_publication_bias <- function(ma_data,
          es = ma_data %>% top_n(ma_size, or_sim),
          p = ma_data %>% filter(selection == 1)
   )
+}
+
+# Comupte i_squared. -----------------------------------------------------------
+
+#' Comupte i_squared
+#'
+#' @param or_sim vector with odds ratios of studies in meta analysis
+#' @param var_within vector Within study variances for each study in meta-analysis.
+#' @param k number of studies in meta-analysis
+#'
+#' @return Isquared
+
+compute_i_squared <- function(or_sim,
+                              var_within,
+                              k){
+                            ln_or <- log(or_sim)
+                            w <- 1/var_within
+                            q <- sum(w * (ln_or - sum(w * ln_or)/sum(w))^2)
+                            i_squared <- max(0, ((q-(k- 1))/q))
+}
+
+
+#' Get unique seed.-------------------------------------------------------------
+#'
+#' @param job_id User generated job_id
+#' @param scenario_id id of the current scenario
+#'
+#' @return seed to be used for the combination of job_id and scenario_id
+
+get_seed <- function(job_id,
+                     scenario_id){
+  seed <- digest(object = c(job_id, scenario_id),
+                 algo="xxhash32") %>%
+                    substr(start = 1, stop = 7) %>%
+                      strtoi(base = 16)
 }

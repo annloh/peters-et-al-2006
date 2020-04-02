@@ -1,0 +1,17 @@
+---
+title: "I^2"
+author: "Anna Lohmann"
+date: "February 20, 2020"
+output: html_document
+---
+
+$I^2 = \frac{Q-(n-1)}{Q}$
+
+$Q = \sum_{i=1}^n w_i(y_i-\frac{\sum_{i=1}^n w_i y_i}{\sum_{i=1}^nw_i})^2$
+
+$w_i=\frac{1}{s_i^2}$ with $s_i^2$ being the within study variance.
+
+```{r}
+
+```
+
