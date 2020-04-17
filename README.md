@@ -3,8 +3,8 @@ Replication of the simulation study by Peters et al 2006
 
 ## Project structure
 The project structure can be obtained from the following tree.
-All R-code is contained in the src file.
-The working directory has to be set to the parent directory(i.e. the one the README.md is located in).
+All R-code is contained in the src directory.
+The working directory has to be set to the parent directory (i.e. the one the README.md is located in).
  
 ```
 .
@@ -72,4 +72,5 @@ Compiles scenarios for simulation. Does not need to be run, is sourced in `main.
 ### plot_error_rate.R
 Plotting function. Does not need to be run is sourced by `analysis.R`.
 
-
+## shiny
+(Does not work)
