@@ -95,12 +95,12 @@ generate_meta_analysis <-function(job_id,
 #' @return A list of descriptives for one simulated study.
 
 simulate_study <- function(job_id,
-                      scenario_id,
-                      p_contr,
-                      bias_type,
-                      bias_strength = NULL,
-                      odds_ratio,
-                      tau = 0){
+                            scenario_id,
+                            p_contr,
+                            bias_type,
+                            bias_strength = NULL,
+                            odds_ratio,
+                            tau = 0){
 
   theta <- rnorm(1, mean = log(odds_ratio), sd = sqrt(tau))
 
@@ -128,7 +128,7 @@ simulate_study <- function(job_id,
                              event_sim_contr = event_sim_contr)
 
   # logical vector of selected studies
-  selection <- set_selection_indicator(bias_type, p_value, bias_strength)
+  selected <- set_selection_indicator(bias_type, p_value, bias_strength)
 
   # Computing a,b,c,d from 2x2 table
   # a = number of events in exposed group
@@ -156,12 +156,12 @@ simulate_study <- function(job_id,
        event_sim_contr = event_sim_contr,
        event_sim_exp = event_sim_exp,
        p_value = p_value,
-       selection = selection,
+       selected = selected,
        a = a,
        b = b,
        c = c,
        d = d,
-       var_within =var_within,
+       var_within = var_within,
        se_lnor = se_lnor,
        or_sim = or_sim,
        theta = theta)
@@ -202,36 +202,36 @@ simulate_unbiased_study_set <- function(job_id,
                                          bias_type = bias_type,
                                          bias_percentage = bias_percentage)
 
-  # set counter for indexing within the loop
-  counter <- 0
+  counter <- 1
 
   # initiate list for study details to be filled in loop
-  ma_data <- list()
+  study_set <- list()
 
   while(required_trials > 0){
+    study <- simulate_study(job_id = job_id,
+                            scenario_id = scenario_id,
+                            p_contr = p_contr,
+                            odds_ratio = odds_ratio,
+                            tau = tau,
+                            bias_type = bias_type,
+                            bias_strength = bias_strength)
+
+    study_set[[counter]] <- study
+    required_trials <- required_trials - as.numeric(study$selected)
 
     counter <- counter + 1
-
-    ma_data[[counter]] <- simulate_study(job_id = job_id,
-                                    scenario_id = scenario_id,
-                                    p_contr = p_contr,
-                                    odds_ratio = odds_ratio,
-                                    tau = tau,
-                                    bias_type = bias_type,
-                                    bias_strength = bias_strength)
-
-    required_trials <- required_trials -  ma_data[[counter]]$selection
   }
 
   # transform list to df
-  ma_data <- do.call(rbind.data.frame, ma_data)
+  study_set_df <- do.call(rbind.data.frame, study_set)
 
-  # attach original number of studies
-  ma_data %<>% mutate(original_k = nrow(ma_data))
+  # attach number of studies
 
-  ma_data <- cbind(ma_data, i_squared_unbiased = compute_i_squared(or_sim = ma_data$or_sim,
-                    var_within = ma_data$var_within,
-                    k = nrow(ma_data)))
+  cbind(study_set_df,
+        original_k = nrow(study_set_df),
+        i_squared_unbiased = compute_i_squared(or_sim = study_set_df$or_sim,
+                                                        var_within = study_set_df$var_within,
+                                                        k = nrow(study_set_df)))
 }
 
 
@@ -270,8 +270,8 @@ simulate_unbiased_study_set <- function(job_id,
 compute_p_value <- function(n, event_sim_exp, event_sim_contr){
 
     matrix(c(event_sim_exp, (n - event_sim_exp),
-                      event_sim_contr, (n - event_sim_contr)),
-                    nrow = 2, byrow = T) %>%
+             event_sim_contr, (n - event_sim_contr)),
+           nrow = 2, byrow = T) %>%
       chisq.test(correct = TRUE) %>%
         .$p.value/2
 }
@@ -316,16 +316,17 @@ select_prob <- function(p_value, bias_strength){
 #' @param bias_strength String indicating the bias strength can be "moderate" or "severe"
 #'  passed to \code{select_prob()}
 #'
-#' @return 1 if bias type is "es" (selection will then be performed later).
-#'         1 if bias type is "p" and the draw from the binomial distribution returned 1.
-#'         0 if bias type is "p" and the draw from the binomial distribution returned 1.
+#' @return TRUE if bias type is "es" (selection will then be performed later).
+#'         TRUE if bias type is "p" and the draw from the binomial distribution returned 1.
+#'         FALSE if bias type is "p" and the draw from the binomial distribution returned 1.
 
 set_selection_indicator <- function(bias_type, p_value, bias_strength){
   if(bias_type == "p"){
     p_value %>%  {rbinom(n = 1, size = 1,
                                       prob = select_prob(p_value = .,
-                                      bias_strength = bias_strength))}
-  } else{1}
+                                      bias_strength = bias_strength)) %>%
+                    as.logical()}
+  } else{TRUE}
 }
 
 
@@ -347,7 +348,7 @@ apply_publication_bias <- function(ma_data,
 
   switch(bias_type,
          es = ma_data %>% top_n(ma_size, or_sim),
-         p = ma_data %>% filter(selection == 1)
+         p = ma_data %>% filter(selected == TRUE)
   )
 }
 

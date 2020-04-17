@@ -1,3 +1,9 @@
+# Anything in these subfolders
+/src/old
+/shiny/
+/tests/
+
+
 # History files
 .Rhistory
 .Rapp.history
