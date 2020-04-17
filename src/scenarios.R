@@ -14,7 +14,10 @@ compile_scenarios <- function(bias_type,
                               bias_strength,
                               odds_ratio,
                               heterogeneity,
-                              ma_size){
+                              ma_size,
+                              prob_cg_distr,
+                              n_cg_distr,
+                              bias_table){
 
   scenarios <- expand.grid(bias_type = bias_type,
                            bias_percentage = bias_percentage,
@@ -34,7 +37,12 @@ compile_scenarios <- function(bias_type,
   # resetting rownames that got jumbled with the filtering
   rownames(scenarios) <- NULL
 
-  scenarios <- scenarios %>% cbind(scenario_id = 1:nrow(scenarios), .)
+  scenarios <- scenarios %>%
+    cbind(scenario_id = 1:nrow(scenarios), .) %>%
+      as_tibble() %>%
+        tibble(. , prob_cg_distr = c(prob_cg_distr),
+                      n_cg_distr = c(n_cg_distr),
+                      tibble::as_tibble_row(list(bias_table = list(bias_table))))
 }
 
 

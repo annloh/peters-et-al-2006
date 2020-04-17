@@ -20,9 +20,16 @@ run_sim <- function(iteration_range,
     job_id <- i
 
     sim_data[[i]] <- purrr::pmap_dfr(scenarios[scenario_selection,],
-                                     function(scenario_id, bias_type, bias_percentage,
-                                              bias_strength, odds_ratio, heterogeneity,
-                                              ma_size) {
+                                     function(scenario_id,
+                                              bias_type,
+                                              bias_percentage,
+                                              bias_strength,
+                                              odds_ratio,
+                                              heterogeneity,
+                                              ma_size,
+                                              prob_cg_distr,
+                                              n_cg_distr,
+                                              bias_table) {
       generate_meta_analysis(
                   job_id = job_id,
                   scenario_id = scenario_id, # inputs first column
@@ -32,7 +39,9 @@ run_sim <- function(iteration_range,
                   odds_ratio = odds_ratio,
                   heterogeneity = heterogeneity,
                   ma_size = ma_size,
-                  prob_cg_distr = prob_cg_distr #change this to..8
+                  prob_cg_distr = prob_cg_distr,
+                  n_cg_distr = n_cg_distr,
+                  bias_table = bias_table
       )
     })
   print(Sys.time() - start_time)

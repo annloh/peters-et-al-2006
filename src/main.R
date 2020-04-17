@@ -21,6 +21,7 @@ bias_table <- list(
               )
 
 prob_cg_distr <- function(){runif(1, min = 0.3, max = 0.7)}
+n_cg_distr <- function(){exp(rnorm(1, mean = 5, sd = 0.3)) %>% round()}
 
 # Variable design parameters ----------------------------------------------
 
@@ -38,7 +39,10 @@ scenarios <- compile_scenarios(bias_type = bias_type,
                                bias_strength = bias_strength,
                                odds_ratio = odds_ratio,
                                heterogeneity = heterogeneity,
-                               ma_size = ma_size)
+                               ma_size = ma_size,
+                               prob_cg_distr = prob_cg_distr,
+                               n_cg_distr = n_cg_distr,
+                               bias_table = bias_table)
 
 saveRDS(scenarios, file = "scenarios.rds")
 

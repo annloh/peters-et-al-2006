@@ -20,9 +20,12 @@
 #' @param ma_size Intended number of studies to be included in final meta-analysis
 #'   (after publication bias).
 #' @param prob_cg_distr Probablility of an event in the control group.
-#'   Can be any value that can be evaluated to a numeric value between 0 and 1.
-#'
-#' @return A dataframe with ma-size rows. A subset of rows returned by
+#'   Can be any value or function that evaluates to a numeric value between 0 and 1.
+#' @param n_cg_distr Sample size in control group (= sample size in exposed group)
+#'   Can be any value or function that evaluates to an integer.
+#' @param bias_table List of pvalue cut-offs and corresponding selection probabilities
+#'   list element names must correspond to elements of bias strength
+#'#' @return A dataframe with ma-size rows. A subset of rows returned by
 #'   simulate_unbiased_study_set()
 #'
 
@@ -35,7 +38,9 @@ generate_meta_analysis <-function(job_id,
                        odds_ratio,
                        heterogeneity,
                        ma_size,
-                       prob_cg_distr) {
+                       prob_cg_distr,
+                       n_cg_distr,
+                       bias_table) {
 
   set.seed(get_seed(job_id = job_id, scenario_id = scenario_id))
 
@@ -49,7 +54,9 @@ generate_meta_analysis <-function(job_id,
                                          odds_ratio = odds_ratio,
                                          bias_type = bias_type,
                                          bias_strength = bias_strength,
-                                         bias_percentage = bias_percentage)
+                                         bias_percentage = bias_percentage,
+                                         n_cg_distr = n_cg_distr,
+                                         bias_table = bias_table)
 
   #repeat sampling in case of heterogeneity
   if(heterogeneity > 0){
@@ -63,6 +70,8 @@ generate_meta_analysis <-function(job_id,
                                            bias_type = bias_type,
                                            bias_strength = bias_strength,
                                            bias_percentage = bias_percentage,
+                                           n_cg_distr = n_cg_distr,
+                                           bias_table = bias_table,
                                            tau = tau)
   }
 
@@ -90,6 +99,8 @@ generate_meta_analysis <-function(job_id,
 #' @param bias_strength  String indicating bias severity "moderate" or "strong".
 #'   only needs to be supplied when bias type = "p".
 #' @param odds_ratio True underlying effect of the symulated meta-analysis.#'
+#' @param n_cg_distr Sample size in control group (= sample size in exposed group)
+#'   Can be any value or function that evaluates to an integer.
 #' @param tau Product of hereogeneity parameter and mean within study-variance
 #'
 #' @return A list of descriptives for one simulated study.
@@ -100,6 +111,8 @@ simulate_study <- function(job_id,
                             bias_type,
                             bias_strength = NULL,
                             odds_ratio,
+                            n_cg_distr,
+                           bias_table,
                             tau = 0){
 
   theta <- rnorm(1, mean = log(odds_ratio), sd = sqrt(tau))
@@ -112,7 +125,7 @@ simulate_study <- function(job_id,
   p_exp <- odds_exp/ (1 + odds_exp)
 
   # n control subjects (page 15 technical report)
-  n <- exp(rnorm(1, mean = 5, sd = 0.3)) %>% round()
+  n <- n_cg_distr()
 
   sim_contr <- rbinom(n, size = 1, prob = p_contr)
   sim_exp <-  rbinom(n, size = 1, prob = p_exp)
@@ -128,7 +141,7 @@ simulate_study <- function(job_id,
                              event_sim_contr = event_sim_contr)
 
   # logical vector of selected studies
-  selected <- set_selection_indicator(bias_type, p_value, bias_strength)
+  selected <- set_selection_indicator(bias_type, p_value, bias_strength, bias_table)
 
   # Computing a,b,c,d from 2x2 table
   # a = number of events in exposed group
@@ -182,6 +195,7 @@ simulate_study <- function(job_id,
 #' @param bias_type paassed on to \code{simulate_study()} and \code{obtain_true_ma_size()}
 #' @param bias_strength passed on to \code{simulate_study()}
 #' @param bias_percentage passed on to \code{obtain_true_ma_size()}
+#' @param n_cg_distr passed on to \code{simulate_study()}
 #' @param tau passed on to \code{simulate_study()}
 #'
 #' @return Returns a data frame of all studies pertaining to a given
@@ -195,6 +209,8 @@ simulate_unbiased_study_set <- function(job_id,
                                         bias_type,
                                         bias_strength = NULL,
                                         bias_percentage = NULL,
+                                        n_cg_distr,
+                                        bias_table,
                                         tau = 0){
 
   # obtain required true number of studies in MA before publication bias
@@ -214,7 +230,9 @@ simulate_unbiased_study_set <- function(job_id,
                             odds_ratio = odds_ratio,
                             tau = tau,
                             bias_type = bias_type,
-                            bias_strength = bias_strength)
+                            bias_strength = bias_strength,
+                            n_cg_distr = n_cg_distr,
+                            bias_table = bias_table)
 
     study_set[[counter]] <- study
     required_trials <- required_trials - as.numeric(study$selected)
@@ -262,7 +280,7 @@ simulate_unbiased_study_set <- function(job_id,
 #' Obtains one-sided p-value from chi-square test.
 #'
 #' @param n size of both exposed and control group.
-#' @param event_sim_exp  Simuated numbr of events in exposed group.
+#' @param event_sim_exp  Simuated number of events in exposed group.
 #' @param event_sim_contr Simulated number of events in control-group.
 #'
 #' @return Returns one sided p-value from chi-square test.
@@ -285,18 +303,17 @@ compute_p_value <- function(n, event_sim_exp, event_sim_contr){
 #' Function computes selection probability based on p_value and intended bia strength.
 #'
 #' @param p_value p_value (one tailed)
-#' @param bias_strength String indicating the bias strength can be "moderate" or "severe"
+#' @param bias_strength String indicating the bias strength
+#' @param bias_table List of pvalue cut-offs and corresponding selection probabilities
+#'   list element names must correspond to elements of bias_strength
 #'
 #' @return Returns probabilty of publication
 
-select_prob <- function(p_value, bias_strength){
-  if (bias_strength == "moderate") {
-    p_table <- c(0.05, 0.2, 0.5, 1)
-    sec_table <- c(1, 0.75, 0.5, 0.25)
-  } else{
-    p_table <- c(0.05, 0.2, 1)
-    sec_table <- c(1, 0.75, 0.25)
-  }
+select_prob <- function(p_value, bias_strength, bias_table){
+
+  p_table <- bias_table[[bias_strength]]$p_table
+  sec_table <- bias_table[[bias_strength]]$sec_table
+
   # output selection probability
   sec_table[min(which(p_table > p_value))]
 }
@@ -315,16 +332,21 @@ select_prob <- function(p_value, bias_strength){
 #' @param p_value p_value (one tailed)
 #' @param bias_strength String indicating the bias strength can be "moderate" or "severe"
 #'  passed to \code{select_prob()}
+#' @param bias_table passed to \code{select_prob()}
 #'
 #' @return TRUE if bias type is "es" (selection will then be performed later).
 #'         TRUE if bias type is "p" and the draw from the binomial distribution returned 1.
 #'         FALSE if bias type is "p" and the draw from the binomial distribution returned 1.
 
-set_selection_indicator <- function(bias_type, p_value, bias_strength){
+set_selection_indicator <- function(bias_type,
+                                    p_value,
+                                    bias_strength,
+                                    bias_table){
   if(bias_type == "p"){
     p_value %>%  {rbinom(n = 1, size = 1,
                                       prob = select_prob(p_value = .,
-                                      bias_strength = bias_strength)) %>%
+                                      bias_strength = bias_strength,
+                                      bias_table = bias_table)) %>%
                     as.logical()}
   } else{TRUE}
 }
