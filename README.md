@@ -52,7 +52,7 @@ Saves the plot as `.pdf` file in the parent directory.
 Loads data produced by `main.R` and produces violing plots of the $I^2$. 
 Does not require `analysis.R` to run first.
 
-###run_sim
+### run_sim
 Wrapper function to loop over the simulation scenarios and generate data. Does not need to be run.
 Is called by `main.R`.
 
