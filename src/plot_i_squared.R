@@ -1,4 +1,5 @@
-# i-squared boxplots
+# I^2 Boxplots ------------------------------------------------------------
+
 
 
 # Load scenarios ----------------------------------------------------------
@@ -9,6 +10,8 @@ sim_data<- readRDS("sim_data.rds")
 
 
 # Compile plotting data ---------------------------------------------------
+# Compute summary statistics of I^2 value for plotting observed I^2 against
+# intended
 
 ma_level_df <- sim_data %>%
   group_by(job_id, scenario_id) %>%
