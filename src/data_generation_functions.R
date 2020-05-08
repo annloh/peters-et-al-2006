@@ -60,7 +60,7 @@ generate_meta_analysis <-function(job_id,
 
   #repeat sampling in case of heterogeneity
   if(heterogeneity > 0){
-    tau <- heterogeneity * mean(ma_data$var_within)
+    tau_squared <- heterogeneity * mean(ma_data$var_within)
 
     ma_data <- simulate_unbiased_study_set(job_id = job_id,
                                            scenario_id = scenario_id,
@@ -72,7 +72,7 @@ generate_meta_analysis <-function(job_id,
                                            bias_percentage = bias_percentage,
                                            n_cg_distr = n_cg_distr,
                                            bias_table = bias_table,
-                                           tau = tau)
+                                           tau_squared = tau_squared)
   }
 
   ma_data <- apply_publication_bias(ma_data = ma_data,
@@ -101,7 +101,7 @@ generate_meta_analysis <-function(job_id,
 #' @param odds_ratio True underlying effect of the symulated meta-analysis.#'
 #' @param n_cg_distr Sample size in control group (= sample size in exposed group)
 #'   Can be any value or function that evaluates to an integer.
-#' @param tau Product of hereogeneity parameter and mean within study-variance
+#' @param tau_squared Product of hereogeneity parameter and mean within study-variance
 #'
 #' @return A list of descriptives for one simulated study.
 
@@ -113,9 +113,9 @@ simulate_study <- function(job_id,
                             odds_ratio,
                             n_cg_distr,
                            bias_table,
-                            tau = 0){
+                            tau_squared = 0){
 
-  theta <- rnorm(1, mean = log(odds_ratio), sd = sqrt(tau))
+  theta <- rnorm(1, mean = log(odds_ratio), sd = sqrt(tau_squared))
 
   # odds in exposure and control group
   odds_contr <- p_contr / (1 - p_contr)
@@ -196,7 +196,7 @@ simulate_study <- function(job_id,
 #' @param bias_strength passed on to \code{simulate_study()}
 #' @param bias_percentage passed on to \code{obtain_true_ma_size()}
 #' @param n_cg_distr passed on to \code{simulate_study()}
-#' @param tau passed on to \code{simulate_study()}
+#' @param tau_squared passed on to \code{simulate_study()}
 #'
 #' @return Returns a data frame of all studies pertaining to a given
 #'   meta-analysis before publication bias
@@ -211,7 +211,7 @@ simulate_unbiased_study_set <- function(job_id,
                                         bias_percentage = NULL,
                                         n_cg_distr,
                                         bias_table,
-                                        tau = 0){
+                                        tau_squared = 0){
 
   # obtain required true number of studies in MA before publication bias
   required_trials <- obtain_true_ma_size(ma_size = ma_size,
@@ -228,7 +228,7 @@ simulate_unbiased_study_set <- function(job_id,
                             scenario_id = scenario_id,
                             p_contr = p_contr,
                             odds_ratio = odds_ratio,
-                            tau = tau,
+                            tau_squared = tau_squared,
                             bias_type = bias_type,
                             bias_strength = bias_strength,
                             n_cg_distr = n_cg_distr,
